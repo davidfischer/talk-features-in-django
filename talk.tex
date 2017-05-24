@@ -1,0 +1,174 @@
+\documentclass[handout]{beamer}
+
+\title{Four Features You May Not Realize Are Part of Django}
+\author{David Fischer}
+\date{May 25, 2017}
+
+%% Beamer Themes
+\usetheme{Berlin}
+\usecolortheme{dove}
+\usefonttheme{serif}
+
+%% Packages
+% Pygments must be accessible to use minted and --shell-escape
+%  must be used with pdflatex
+\usepackage{minted}
+\usepackage{hyperref}
+\usepackage[font=scriptsize,labelformat=empty]{caption}
+
+
+\setbeamertemplate{footline}{
+  \hspace*{.2cm}
+  \scriptsize{
+    \insertshorttitle
+    \hspace*{50pt}
+    \hfill
+    \insertframenumber/\inserttotalframenumber
+    \hspace*{.2cm}
+  }
+  \vspace{9pt}
+}
+
+
+\begin{document}
+
+\maketitle
+
+
+% Password validation - new in Django 1.9
+% - ties into the user forms (UserCreationForm, PasswordChangeForm, etc.)
+% - there are builtin validators for common passwords, length, numeric only passwords and similarity with the username
+% - you can add your own!
+
+
+% Fragile is required for syntax highlighting
+\begin{frame}[fragile]
+\frametitle{Password validation}
+
+{\tiny
+\begin{minted}{python}
+## settings.py
+
+# Password validation
+# https://docs.djangoproject.com/en/1.11/topics/auth/passwords/#module-django.contrib.auth.password_validation
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+]
+\end{minted}
+}
+
+\end{frame}
+
+
+% IP Geolocation - revised in Django 1.9
+
+% Fragile is required for syntax highlighting
+\begin{frame}[fragile]
+\frametitle{IP Geolocation}
+
+{\tiny
+\begin{minted}{python}
+
+# Useful in views/middleware/utils
+# https://docs.djangoproject.com/en/1.11/ref/contrib/gis/geoip2/#django.contrib.gis.geoip2.GeoIP2
+from django.contrib.gis.geoip2 import GeoIP2
+
+g = GeoIP2()
+g.city('72.14.207.99')
+
+# {'city': 'Mountain View',
+#  'country_code': 'US',
+#  'country_name': 'United States',
+#  'dma_code': 807,
+#  'latitude': 37.419200897216797,
+#  'longitude': -122.05740356445312,
+#  'postal_code': '94043',
+#  'region': 'CA',
+# }
+
+
+# * Uses MaxMind GeoIP datasets
+
+\end{minted}
+}
+
+\end{frame}
+
+
+% UUIDs - new in Django 1.8
+% These have advantages like making your primary keys not guessable
+% They will be unique across database servers in case you ever need to shard data
+% Postgres has a native field for this
+
+% Fragile is required for syntax highlighting
+\begin{frame}[fragile]
+\frametitle{Universal Unique Identifiers as Primary Keys}
+
+{\tiny
+\begin{minted}{python}
+## models.py
+
+# https://docs.djangoproject.com/en/1.11/ref/models/fields/#django.db.models.UUIDField
+class BaseModel(models.Model):
+    """
+    An abstract base model that defines our PK as a UUID and adds a
+    `created_date` and `updated_date` to each model.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+\end{minted}
+}
+
+\end{frame}
+
+
+% Class-based Authentication Views - new in Django 1.11
+% Allows fine-tuning of Django's login/logout/password change structure
+
+% Fragile is required for syntax highlighting
+\begin{frame}[fragile]
+\frametitle{Class-based Authentication Views}
+
+{\tiny
+\begin{minted}{python}
+## views.py
+
+from django.contrib.auth import views as auth_views
+
+# https://docs.djangoproject.com/en/1.11/topics/auth/default/#all-authentication-views
+class LoginView(auth_views.LoginView):
+    template_name = 'authentication/login.html'
+    # Redirect already logged in users to `settings.LOGIN_REDIRECT_URL`
+    redirect_authenticated_user = True
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # User is now logged in - do something extra like send emails, analytics, etc.
+        return response
+\end{minted}
+}
+
+\end{frame}
+
+
+% I will put a link to this talk in the comments of the meetup
+
+\begin{frame}
+\frametitle{}
+  {\huge Comments or Questions?}
+\end{frame}
+
+
+\end{document}
